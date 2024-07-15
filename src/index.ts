@@ -109,29 +109,28 @@ client.on('ready', () => {
 });
 
 
-const tempChannels: VoiceChannel[] = [];
+// const tempChannels: VoiceChannel[] = [];
+// client.on('voiceStateUpdate',async (oldState,newState) => {
+//     if (newState.channel !== undefined) {
+//         if (newState.channelId == '1239514510381809694'){
+//             console.log('create new channel');
+//             const category = newState.guild.channels.cache.find(channel => channel.type == ChannelType.GuildCategory && channel.id == '1235590918447300721');
+//             const channel = await newState.guild.channels.create({'name': `${newState.member.displayName}@${newState.guild.name}`,'type': ChannelType.GuildVoice,'parent': newState.channel.parent});
+//             newState.member.voice.setChannel(channel);
+//             tempChannels.push(channel);
+//         }
+//     }
 
-client.on('voiceStateUpdate',async (oldState,newState) => {
-    if (newState.channel !== undefined) {
-        if (newState.channelId == '1239514510381809694'){
-            console.log('create new channel');
-            const category = newState.guild.channels.cache.find(channel => channel.type == ChannelType.GuildCategory && channel.id == '1235590918447300721');
-            const channel = await newState.guild.channels.create({'name': `${newState.member.displayName}@${newState.guild.name}`,'type': ChannelType.GuildVoice,'parent': newState.channel.parent});
-            newState.member.voice.setChannel(channel);
-            tempChannels.push(channel);
-        }
-    }
-
-    if (oldState.channel !== null) {
-        tempChannels.forEach(channel => {
-            if (channel.id == oldState.channel.id) {
-                if(channel.members.size == 0){
-                    channel.delete('No Users Left In Temp Channel');
-                }
-            }
-        });
-    }
-});
+//     if (oldState.channel !== null) {
+//         tempChannels.forEach(channel => {
+//             if (channel.id == oldState.channel.id) {
+//                 if(channel.members.size == 0){
+//                     channel.delete('No Users Left In Temp Channel');
+//                 }
+//             }
+//         });
+//     }
+// });
 
 
 
