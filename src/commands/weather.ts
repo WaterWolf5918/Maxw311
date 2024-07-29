@@ -506,7 +506,7 @@ export const command: Command = {
                 let message = '## Active User List\n';
                 for (let i=0;i<Object.keys(userDatabase.getFull()).length;i++){
                     const user = Object.keys(userDatabase.getFull())[i];
-                    message += `* ${(await interaction.guild.members.fetch(user)).displayName}\n`;
+                    message += `* ${(await interaction.client.users.fetch(user)).displayName}\n`;
                 }
                 await interaction.reply(message);
                 break;

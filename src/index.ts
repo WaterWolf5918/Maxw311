@@ -7,12 +7,59 @@ import chalk from 'chalk';
 import { Logger } from './logger.js';
 import { Command } from './command.js';
 import { pathToFileURL } from 'url';
+import { songConvert } from './modules/songConvert.js';
 
+// Variables \\
 
 /**@deprecated */
-// const __dirname = import.meta.dirname;
+const __dirname = import.meta.dirname;
 
+const config = loadConfig('./config.json');
+const rest = new REST({ version: '9' }).setToken(config.token); // For slash commands
+const commands: Command[] = [];
+export const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildBans,
+        GatewayIntentBits.GuildEmojisAndStickers,
+        GatewayIntentBits.GuildIntegrations,
+        GatewayIntentBits.GuildWebhooks,
+        GatewayIntentBits.GuildInvites,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildPresences,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildMessageTyping,
+        GatewayIntentBits.DirectMessages,
+        GatewayIntentBits.DirectMessageReactions,
+        GatewayIntentBits.DirectMessageTyping,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildScheduledEvents,
+        GatewayIntentBits.AutoModerationConfiguration,
+        GatewayIntentBits.AutoModerationExecution
+    ]
+});
 
+// Functions \\
+
+/**
+ * @param file location of the config file
+ */
+function loadConfig(file) {
+    if(!fs.existsSync(file)) {
+        const json = {
+            'token': 'BOT TOKEN',
+            'clientID': 'CLIENT ID'
+        };
+        fs.writeFileSync(file,JSON.stringify(json,null,4));
+        throw new Error(chalk.redBright('\nConfig File Not Found, Creating...\nPlease add your bot token and clientID to the config.'));
+    }
+    const json = JSON.parse(fs.readFileSync('./config.json').toString());
+    if(json.clientID === 'CLIENT ID' || json.token === 'BOT TOKEN') throw new Error(chalk.redBright('\nPlaceholder Token And ClientID Still Inplace\nPlease add your bot token and clientID to the config.'));
+    Logger.log('Config OK');
+    return JSON.parse(fs.readFileSync('./config.json').toString());
+}
 
 async function loadCommands() {
     const files = fs.readdirSync('./dist/commands',{'withFileTypes': true});
@@ -62,168 +109,36 @@ async function initializeCommands() {
 }
 
 
-const config = JSON.parse(fs.readFileSync('./config.json').toString());
-const rest = new REST({ version: '9' }).setToken(config.token); // For slash commands
-const commands: Command[] = [];
-
-initializeCommands();
-
-// console.clear();
-
-export const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildBans,
-        GatewayIntentBits.GuildEmojisAndStickers,
-        GatewayIntentBits.GuildIntegrations,
-        GatewayIntentBits.GuildWebhooks,
-        GatewayIntentBits.GuildInvites,
-        GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.GuildPresences,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildMessageReactions,
-        GatewayIntentBits.GuildMessageTyping,
-        GatewayIntentBits.DirectMessages,
-        GatewayIntentBits.DirectMessageReactions,
-        GatewayIntentBits.DirectMessageTyping,
-        GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildScheduledEvents,
-        GatewayIntentBits.AutoModerationConfiguration,
-        GatewayIntentBits.AutoModerationExecution
-    ]
-});
-
-client.on('ready', () => {
-    Logger.log(`Logged in as ${client.user.tag}!`);
+function displayInvites(){
     client.guilds.cache.forEach((guild) => {
-        
-
         guild.invites.fetch().then(invites => {
             invites.forEach(invite => {
                 console.log(`<${invite.channel.name}> [${invite.inviter.username}]: ${invite.code}`);
             });
         });
     });
-    // initializeWebsockets(client)
+}
+
+
+// Events \\
+
+client.on('ready', () => {
+    Logger.log(`Logged in as ${client.user.tag}!`);
 });
-
-
-// const tempChannels: VoiceChannel[] = [];
-// client.on('voiceStateUpdate',async (oldState,newState) => {
-//     if (newState.channel !== undefined) {
-//         if (newState.channelId == '1239514510381809694'){
-//             console.log('create new channel');
-//             const category = newState.guild.channels.cache.find(channel => channel.type == ChannelType.GuildCategory && channel.id == '1235590918447300721');
-//             const channel = await newState.guild.channels.create({'name': `${newState.member.displayName}@${newState.guild.name}`,'type': ChannelType.GuildVoice,'parent': newState.channel.parent});
-//             newState.member.voice.setChannel(channel);
-//             tempChannels.push(channel);
-//         }
-//     }
-
-//     if (oldState.channel !== null) {
-//         tempChannels.forEach(channel => {
-//             if (channel.id == oldState.channel.id) {
-//                 if(channel.members.size == 0){
-//                     channel.delete('No Users Left In Temp Channel');
-//                 }
-//             }
-//         });
-//     }
-// });
-
 
 
 
 client.on('messageCreate', async (message) => {
     const tokens = message.content.toLowerCase().split(' ');
     const messageString: string = message.content;
-    console.log(`[${message.channel.id}] <${message.author.displayName}> : ${message.content}`);
-    songConvert(message);
+    // console.log(`[${message.channel.id}] <${message.author.displayName}> : ${message.content}`);
+    try{
+        songConvert(message);
+    } catch(error) {
+        message.reply(`<@877743969503682612>\n[Internal Error] songConvert Failed\nError:\n${error}`);
+    }
 });
 
-
-async function songConvert(message:Message){
-    const ytMusicRegex = /https:\/\/music\.youtube\.com\S*/gm;
-    const spotifyRegex = /https:\/\/open\.spotify\.com\S*/gm;
-    const appleMusicRegex = /https:\/\/music\.apple\.com\S*/gm;
-    const ytMusic = ytMusicRegex.exec(message.content);
-    const spotify = spotifyRegex.exec(message.content);
-    const appleMusic = appleMusicRegex.exec(message.content);
-    // console.log(appleMusic);
-
-
-
-
-
-
-    if (ytMusic !== null){
-        const list = await songLink(message.content);
-        const embed = new EmbedBuilder().setTitle('Universal Music Links');
-        let body = '';
-        Object.keys(list).forEach((service,i) => {
-            body += `* [${service}](<${Object.values(list)[i]}>)\n`;
-        });
-        embed.setDescription(body);
-        embed.setFooter({
-            text: 'Powered by Songlink',
-        });
-        message.reply({embeds: [embed]});
-    }
-    else if (spotify !== null){
-        const list = await songLink(message.content);
-        const embed = new EmbedBuilder().setTitle('Universal Music Links');
-        let body = '';
-        Object.keys(list).forEach((service,i) => {
-            body += `* [${service}](<${Object.values(list)[i]}>)\n`;
-        });
-        embed.setDescription(body);
-        embed.setFooter({
-            text: 'Powered by Songlink',
-        });
-        message.reply({embeds: [embed]});
-    }
-    else if(appleMusic !== null){
-        const list = await songLink(message.content);
-        const embed = new EmbedBuilder().setTitle('Universal Music Links');
-        let body = '';
-        Object.keys(list).forEach((service,i) => {
-            body += `* [${service}](<${Object.values(list)[i]}>)\n`;
-        });
-        embed.setDescription(body);
-        embed.setFooter({
-            text: 'Powered by Songlink',
-        });
-        message.reply({embeds: [embed]});
-    }
-    // if()
-}
-
-async function songLink(url){
-    const list = {
-        Youtube: '',
-        YoutubeMusic: '',
-        Spotify: '',
-        AppleMusic: '',
-        AmazonMusic: ''
-
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let data: any = await fetch(`https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(url)}`);
-    data = await data.json();
-    list.Youtube = (data.linksByPlatform.youtube === undefined ? 'https://en.wikipedia.org/wiki/HTTP_404' :data.linksByPlatform.youtube.url);
-    list.YoutubeMusic = (data.linksByPlatform.youtubeMusic === undefined ? 'https://en.wikipedia.org/wiki/HTTP_404' :data.linksByPlatform.youtubeMusic.url);
-    list.Spotify = (data.linksByPlatform.spotify === undefined ? 'https://en.wikipedia.org/wiki/HTTP_404' :data.linksByPlatform.spotify.url);
-    list.AppleMusic = (data.linksByPlatform.appleMusic === undefined ? 'https://en.wikipedia.org/wiki/HTTP_404' :data.linksByPlatform.appleMusic.url);
-    list.AmazonMusic = (data.linksByPlatform.amazonMusic === undefined ? 'https://en.wikipedia.org/wiki/HTTP_404' :data.linksByPlatform.amazonMusic.url);
-    return list;
-}
-
-
-
-client.on('messageDelete',async (message) => {
-
-});
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
@@ -237,5 +152,7 @@ client.on('interactionCreate', async interaction => {
 });
 
 
+// Init \\
 
+initializeCommands();
 client.login(config.token);

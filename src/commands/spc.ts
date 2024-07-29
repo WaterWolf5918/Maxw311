@@ -1,6 +1,15 @@
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { Command } from '../command.js';
 import { devices, firefox } from 'playwright';
+import { unlink, writeFileSync } from 'fs';
+import { Logger } from '../logger.js';
+
+async function downloadImage(url,file) {
+    const buffer = await (await fetch(url)).arrayBuffer();
+    writeFileSync(file,Buffer.from(buffer));
+    await new Promise(resolve => setTimeout(resolve,350));
+}
+
 export const command: Command = {
     commandBuilder: new SlashCommandBuilder()
         .setName('spc')
@@ -15,7 +24,7 @@ export const command: Command = {
                     {name: 'Day 3', value: 3}
                 )
         ),
- 
+
 
     runnable: async function (interaction) {
         interaction.reply('Creating fake browser and getting results. Please Wait...');
@@ -23,7 +32,6 @@ export const command: Command = {
         if (interaction.options.get('day') != null){value = interaction.options.get('day').value.toString();}
         
         const url = `https://www.spc.noaa.gov/products/outlook/day${value}otlk.html`;
-        // const url = 'https://www.spc.noaa.gov/products/outlook/day1otlk.html';
         const browser = await firefox.launch({ 'headless': true });
         const context = await browser.newContext(devices['Desktop Firefox']);
         const page = await context.newPage();
@@ -33,20 +41,30 @@ export const command: Command = {
         const title = await page.$eval('.zz', text => text.innerText);
         //@ts-expect-error fdsfswd
         const image = await page.$eval('#main', img => img.src);
-        const embed = new EmbedBuilder()
-            .setAuthor({
-                name: 'Storm Prediction Center',
-                iconURL: 'https://www.spc.noaa.gov/nwscwi/noaaleft.jpg',
-            })
-            .setTitle(title)
-            .setURL('https://www.spc.noaa.gov/products/outlook/day1otlk.html')
-            .setImage(image)
-            .setColor('#0000f4');
-
-        await interaction.editReply({ embeds: [embed],content: ' ' });
         await context.close();
         await browser.close();
-        // interaction.reply('Sorry but as of 5/27/2024 this service has been discontinued.');
-        // console.log(test);
+        const filename = `spc${Date.now()}.gif`;
+
+        interaction.editReply('Saving Local Image...');
+        downloadImage(image,`./spc/${filename}`)
+            .then(async () => {
+                interaction.editReply('Saved Image, Uploading To Discord...');
+                const embed = new EmbedBuilder()
+                    .setAuthor({
+                        name: 'Storm Prediction Center',
+                        iconURL: 'https://www.spc.noaa.gov/nwscwi/noaaleft.jpg',
+                    })
+                    .setTitle(title)
+                    .setURL(`https://www.spc.noaa.gov/products/outlook/day${value}otlk.html`)
+                    .setImage(`attachment://${filename}`)
+                    .setColor('#0000f4');
+                await interaction.editReply({ embeds: [embed],content: ' ', files: [`./spc/${filename}`] });
+            })
+            .then(() => {
+                unlink(`./spc/${filename}`,() => {
+                    Logger.log(`Deleted Temp Image: "./spc/${filename}"`);
+                });
+            });
+        
     }
 };

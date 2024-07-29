@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-console.log(chalk.level);
 
 
 export class Logger {
@@ -23,22 +22,5 @@ export class Logger {
         const date = Logger.getDate(d);
         console.log(`[${chalk.redBright('-')}] ${chalk.rgb(140,140,140 )(date + ' ' + time)}:   ` + args);
     }
-    // static log(...args: any[]) {
-    //     let d = new Date();
-    //     let time = Logger.getTime(d);
-    //     let date = Logger.getDate(d);
-    //     console.log(`[+] ${date} ${time}:   ` + args);
-    // }
-
-    // static error(...args: any[]) {
-    //     let d = new Date();
-    //     let time = Logger.getTime(d);
-    //     let date = Logger.getDate(d);
-    //     console.log(`[-] ${date} ${time}:   ` + args);
-    // }
 }
 
-
-// console.log(`[${chalk.greenBright('+')}] ${chalk.rgb(140,140,140 )('12/15/2022 07:51:05')}:   A Nice Info Message`);
-// console.log(`[${chalk.yellow('*')}] ${chalk.rgb(140,140,140 )('12/15/2022 07:51:05')}:   A Ok Warn Message`);
-// console.log(`[${chalk.redBright('-')}] ${chalk.rgb(140,140,140 )('12/15/2022 07:51:05')}:   A Not So Fun Error`);
