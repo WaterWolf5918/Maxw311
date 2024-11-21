@@ -2,12 +2,17 @@ import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { Command } from '../command.js';
 import { devices, firefox } from 'playwright';
 import { unlink, writeFileSync } from 'fs';
+import { writeFile } from 'fs/promises';
 import { Logger } from '../logger.js';
 
 async function downloadImage(url,file) {
     const buffer = await (await fetch(url)).arrayBuffer();
-    writeFileSync(file,Buffer.from(buffer));
-    await new Promise(resolve => setTimeout(resolve,350));
+    await writeFile(file,Buffer.from(buffer));
+    // writeFile(file,Buffer.from(buffer),() => {
+
+    // });
+    // await writeFileSync(file,Buffer.from(buffer));
+    // await new Promise(resolve => writeFileSync(file,Buffer.from(buffer)));
 }
 
 export const command: Command = {
@@ -46,25 +51,43 @@ export const command: Command = {
         const filename = `spc${Date.now()}.gif`;
 
         interaction.editReply('Saving Local Image...');
-        downloadImage(image,`./spc/${filename}`)
-            .then(async () => {
-                interaction.editReply('Saved Image, Uploading To Discord...');
-                const embed = new EmbedBuilder()
-                    .setAuthor({
-                        name: 'Storm Prediction Center',
-                        iconURL: 'https://www.spc.noaa.gov/nwscwi/noaaleft.jpg',
-                    })
-                    .setTitle(title)
-                    .setURL(`https://www.spc.noaa.gov/products/outlook/day${value}otlk.html`)
-                    .setImage(`attachment://${filename}`)
-                    .setColor('#0000f4');
-                await interaction.editReply({ embeds: [embed],content: ' ', files: [`./spc/${filename}`] });
+        await downloadImage(image,`./spc/${filename}`);
+        interaction.editReply('Saved Image, Uploading To Discord...');
+        const embed = new EmbedBuilder()
+            .setAuthor({
+                name: 'Storm Prediction Center',
+                iconURL: 'https://www.spc.noaa.gov/nwscwi/noaaleft.jpg',
             })
-            .then(() => {
-                unlink(`./spc/${filename}`,() => {
-                    Logger.log(`Deleted Temp Image: "./spc/${filename}"`);
-                });
-            });
+            .setTitle(title)
+            .setURL(`https://www.spc.noaa.gov/products/outlook/day${value}otlk.html`)
+            .setImage(`attachment://${filename}`)
+            .setColor('#0000f4');
+        await interaction.editReply({ embeds: [embed],content: ' ', files: [`./spc/${filename}`] });
+        unlink(`./spc/${filename}`,() => {
+            Logger.log(`Deleted Temp Image: "./spc/${filename}"`);
+        });
+        // downloadImage(image,`./spc/${filename}`)
+        //     .then(async () => {
+        //         interaction.editReply('Saved Image, Uploading To Discord...');
+        //         const embed = new EmbedBuilder()
+        //             .setAuthor({
+        //                 name: 'Storm Prediction Center',
+        //                 iconURL: 'https://www.spc.noaa.gov/nwscwi/noaaleft.jpg',
+        //             })
+        //             .setTitle(title)
+        //             .setURL(`https://www.spc.noaa.gov/products/outlook/day${value}otlk.html`)
+        //             .setImage(`attachment://${filename}`)
+        //             .setColor('#0000f4');
+        //         await interaction.editReply({ embeds: [embed],content: ' ', files: [`./spc/${filename}`] });
+        //         unlink(`./spc/${filename}`,() => {
+        //             Logger.log(`Deleted Temp Image: "./spc/${filename}"`);
+        //         });
+        //     });
+        // .then(() => {
+        //     unlink(`./spc/${filename}`,() => {
+        //         Logger.log(`Deleted Temp Image: "./spc/${filename}"`);
+        //     });
+        // });
         
     }
 };

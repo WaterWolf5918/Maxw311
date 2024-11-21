@@ -17,6 +17,17 @@ const __dirname = import.meta.dirname;
 const config = loadConfig('./config.json');
 const rest = new REST({ version: '9' }).setToken(config.token); // For slash commands
 const commands: Command[] = [];
+
+let stockChecker = false;
+
+export function setStockChecker(value: boolean) {
+    stockChecker = value;
+}
+
+export function getStockChecker(): boolean {
+    return stockChecker;
+}
+
 export const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -64,7 +75,7 @@ function loadConfig(file) {
 async function loadCommands() {
     const files = fs.readdirSync('./dist/commands',{'withFileTypes': true});
     for(const file of files) {
-        if (!file.isFile() || !file.name.endsWith('js')) return;
+        if (!file.isFile() || !file.name.endsWith('js')) continue;
         const command: Command = (await import(`./commands/${file.name}`)).command;
         if (command == undefined) { Logger.error('Error loading command file "' + file.name + '.js"!'); return; }
         commands.push(command);
@@ -98,7 +109,7 @@ async function initializeCommands() {
         }
 
         await rest.put(
-            Routes.applicationGuildCommands(config.clientID,'1235590917839261769'),
+            Routes.applicationGuildCommands(config.clientID,'1308592368504668300'),
             { body: t },
         );
         const timeEnded = Date.now();
