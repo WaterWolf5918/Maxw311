@@ -25,14 +25,16 @@ export async function songConvert(message:Message){
         if (message.author.id == '1239027203090419796') {message.reply('I have made a severe and continuous lapse in my judgement\nThis bot has now tried to go into a intinty loop, THATS BAD :skull:'); return;}
         console.log(message.content);
         if (trustedChannels.includes(message.channel.id)){
-            await buildSongEmbed(message);
+            const newURL = message.content.replace('www','music');
+            message.content = newURL;
+            await buildSongEmbed(message,true);
         }
     }
     // if()
 }
 
 
-export async function buildSongEmbed(message: Message) {
+export async function buildSongEmbed(message: Message,youtube=false) {
     const json = await songLink(message.content);
     const info = json.info;
     const list = json.list;
@@ -48,7 +50,8 @@ export async function buildSongEmbed(message: Message) {
         text: 'Powered by Songlink',
     });
     embed.setImage(encodeURI(`https://waterwolf.net/api/musicEmbed?title=${info.title}&artist=${info.artist}&imgSrc=${info.imgSrc}`));
-    if (serviceNumber >= 5){
+    if (serviceNumber >= 4 && youtube){
+        console.log(serviceNumber);
         return;
     }
     message.reply({embeds: [embed]});
