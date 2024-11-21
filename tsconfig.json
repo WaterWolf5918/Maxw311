@@ -11,6 +11,7 @@
         "allowJs": true,
         "esModuleInterop": true,
         "checkJs": true,
+        "skipLibCheck": true
     },
     "include": [
         "src/**/*.ts",
@@ -18,5 +19,6 @@
     "exclude": [
         "node_modules",
         "docs"
-    ]
+    ],
+    
 }
