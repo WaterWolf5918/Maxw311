@@ -8,6 +8,7 @@ import { Logger } from './logger.js';
 import { Command } from './command.js';
 import { pathToFileURL } from 'url';
 import { songConvert } from './modules/songConvert.js';
+import { ConfigHelper } from './utils.js';
 
 // Variables \\
 
@@ -138,22 +139,52 @@ client.on('ready', () => {
 });
 
 
-
+const xpStore = new ConfigHelper('./xp.json');
 client.on('messageCreate', async (message) => {
     const tokens = message.content.toLowerCase().split(' ');
     const messageString: string = message.content;
-    // console.log(`[${message.channel.id}] <${message.author.displayName}> : ${message.content}`);
+    // console.log(message.content.length);
+    // if (message.content.length < 2)
     try{
         songConvert(message);
     } catch(error) {
         message.reply(`<@877743969503682612>\n[Internal Error] songConvert Failed\nError:\n${error}`);
     }
+    if (message.author.bot) return;
+    const randomXP = Math.floor(Math.random() * (15 - 1 + 1)) + 1;
+    const oldXP = xpStore.get(message.author.id)?.xp ?? 0;
+    const oldoldLevel =  Math.floor(oldXP / 100);
+    const oldLevel =  Math.floor(Math.log(oldXP));
+
+    const messageCount = xpStore.get(message.author.id)?.messageCount ?? 0;
+    const newXP = oldXP + randomXP;
+    const oldnewLevel = Math.floor(newXP / 100);
+    const newLevel = Math.floor(Math.log(newXP));
+    xpStore.set(message.author.id,{xp: newXP,messageCount: messageCount + 1});
+    // if (message.author.id == '877743969503682612'){
+
+    if (oldLevel !== newLevel){
+        const embed = new EmbedBuilder();
+        embed.setTitle('Level UP');
+        embed.setDescription(`${message.author.displayName} Leveled UP`);
+        embed.addFields([
+            {'name': 'XP', 'value' : newXP.toString()},
+            {'name': 'Level', 'value' : newLevel.toString()},
+            {'name': 'Message Count', 'value': (messageCount + 1).toString()}
+        ]);
+        message.reply({'embeds': [embed]});
+    }
+
+    // }
+
+    // console.log(`[${message.channel.id}] <${message.author.displayName}> : ${message.content}`);
+
 });
 
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
-
+    if (!interaction.isChatInputCommand()) return;
     for (let i = 0; i < commands.length; i++) {
         if (interaction.commandName == commands[i].commandBuilder.name) {
             commands[i].runnable(interaction);
