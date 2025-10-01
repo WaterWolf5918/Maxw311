@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "ewatch": "nodemon --watch . --exec \"electron . --color=16m\"",
-    "start": "tsc && electron . --color=16m"
+    "startOld": "tsc && electron . --color=16m",
+    "start": "tsc && node ."
   },
   "keywords": [],
   "author": "",
